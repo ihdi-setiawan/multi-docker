@@ -1,0 +1,23 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t ihdi/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true ihdi/react-test npm test
+
+after_success:
+  - docker build -t ihdi/multi-client ./client
+  - docker build -t ihdi/multi-nginx ./nginx
+  - docker build -t ihdi/multi-server ./server
+  - docker build -t ihdi/multi-worker ./worker
+
+  #log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
+  #take those images and push them to docker hub
+  - docker push ihdi/multi-client
+  - docker push ihdi/multi-nginx
+  - docker push ihdi/multi-server
+  - docker push ihdi/multi-worker
